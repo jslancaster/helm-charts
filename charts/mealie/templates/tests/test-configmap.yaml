@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "mealie.fullname" . }}-test-configmap"
+  labels:
+    {{- include "mealie.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  containers:
+    - name: test
+      image: busybox:1.36
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing ConfigMap environment variables..."
+
+          # Check critical environment variables
+          if [ -z "$DB_ENGINE" ]; then
+            echo "FAILED: DB_ENGINE not set"
+            exit 1
+          fi
+          echo "✓ DB_ENGINE is set to: $DB_ENGINE"
+
+          if [ -z "$BASE_URL" ]; then
+            echo "FAILED: BASE_URL not set"
+            exit 1
+          fi
+          echo "✓ BASE_URL is set to: $BASE_URL"
+
+          if [ -z "$TZ" ]; then
+            echo "FAILED: TZ not set"
+            exit 1
+          fi
+          echo "✓ TZ is set to: $TZ"
+
+          if [ -z "$API_PORT" ]; then
+            echo "FAILED: API_PORT not set"
+            exit 1
+          fi
+          echo "✓ API_PORT is set to: $API_PORT"
+
+          echo "SUCCESS: All required ConfigMap variables are present"
+          exit 0
+      envFrom:
+      {{- include "mealie.envFrom.configMap" . | nindent 8 }}
+  restartPolicy: Never

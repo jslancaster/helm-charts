@@ -1,0 +1,81 @@
+{{- if .Values.persistence.enabled }}
+{{- if .Values.persistence.data.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "mealie.fullname" . }}-test-persistence"
+  labels:
+    {{- include "mealie.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  containers:
+    - name: test
+      image: busybox:1.36
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing persistent volume mounts..."
+
+          # Check if data directory is mounted
+          if [ ! -d "{{ .Values.persistence.data.mountPath }}" ]; then
+            echo "FAILED: Data mount path {{ .Values.persistence.data.mountPath }} does not exist"
+            exit 1
+          fi
+          echo "✓ Data mount path exists: {{ .Values.persistence.data.mountPath }}"
+
+          # Check if directory is writable
+          TEST_FILE="{{ .Values.persistence.data.mountPath }}/.helm-test-write"
+          if touch "$TEST_FILE" 2>/dev/null; then
+            echo "✓ Data directory is writable"
+            rm -f "$TEST_FILE"
+          else
+            echo "FAILED: Data directory is not writable"
+            exit 1
+          fi
+
+          {{- if .Values.persistence.backup.enabled }}
+          # Check backup directory if enabled
+          if [ ! -d "{{ .Values.persistence.backup.mountPath }}" ]; then
+            echo "FAILED: Backup mount path {{ .Values.persistence.backup.mountPath }} does not exist"
+            exit 1
+          fi
+          echo "✓ Backup mount path exists: {{ .Values.persistence.backup.mountPath }}"
+
+          # Check if backup directory is writable
+          BACKUP_TEST_FILE="{{ .Values.persistence.backup.mountPath }}/.helm-test-write"
+          if touch "$BACKUP_TEST_FILE" 2>/dev/null; then
+            echo "✓ Backup directory is writable"
+            rm -f "$BACKUP_TEST_FILE"
+          else
+            echo "FAILED: Backup directory is not writable"
+            exit 1
+          fi
+          {{- end }}
+
+          echo "SUCCESS: All persistent volumes are properly mounted and writable"
+          exit 0
+      volumeMounts:
+      {{- if .Values.persistence.data.enabled }}
+        - name: data
+          mountPath: {{ .Values.persistence.data.mountPath }}
+      {{- end }}
+      {{- if .Values.persistence.backup.enabled }}
+        - name: backup
+          mountPath: {{ .Values.persistence.backup.mountPath }}
+      {{- end }}
+  volumes:
+  {{- if .Values.persistence.data.enabled }}
+    - name: data
+      persistentVolumeClaim:
+        claimName: {{ .Values.persistence.data.existingClaim | default (printf "%s-data" (include "mealie.fullname" .)) }}
+  {{- end }}
+  {{- if .Values.persistence.backup.enabled }}
+    - name: backup
+      persistentVolumeClaim:
+        claimName: {{ .Values.persistence.backup.existingClaim | default (printf "%s-backup" (include "mealie.fullname" .)) }}
+  {{- end }}
+  restartPolicy: Never
+{{- end }}
+{{- end }}

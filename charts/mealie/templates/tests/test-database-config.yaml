@@ -1,0 +1,77 @@
+{{- if eq .Values.config.database.engine "postgres" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "mealie.fullname" . }}-test-database-config"
+  labels:
+    {{- include "mealie.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  containers:
+    - name: test
+      image: busybox:1.36
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing PostgreSQL database configuration..."
+
+          # Check DB_ENGINE
+          if [ "$DB_ENGINE" != "postgres" ]; then
+            echo "FAILED: DB_ENGINE should be 'postgres' but is '$DB_ENGINE'"
+            exit 1
+          fi
+          echo "✓ DB_ENGINE is correctly set to postgres"
+
+          # Check PostgreSQL connection parameters
+          if [ -z "$POSTGRES_SERVER" ]; then
+            echo "FAILED: POSTGRES_SERVER not set"
+            exit 1
+          fi
+          echo "✓ POSTGRES_SERVER is set to: $POSTGRES_SERVER"
+
+          if [ -z "$POSTGRES_PORT" ]; then
+            echo "FAILED: POSTGRES_PORT not set"
+            exit 1
+          fi
+          echo "✓ POSTGRES_PORT is set to: $POSTGRES_PORT"
+
+          if [ -z "$POSTGRES_DB" ]; then
+            echo "FAILED: POSTGRES_DB not set"
+            exit 1
+          fi
+          echo "✓ POSTGRES_DB is set to: $POSTGRES_DB"
+
+          if [ -z "$POSTGRES_USER" ]; then
+            echo "FAILED: POSTGRES_USER not set"
+            exit 1
+          fi
+          echo "✓ POSTGRES_USER is set"
+
+          if [ -z "$POSTGRES_PASSWORD" ]; then
+            echo "FAILED: POSTGRES_PASSWORD not set"
+            exit 1
+          fi
+          echo "✓ POSTGRES_PASSWORD is set (value hidden)"
+
+          {{- if not .Values.config.database.postgres.existingSecret }}
+          echo ""
+          echo "⚠ WARNING: Using inline database credentials"
+          echo "⚠ This is only recommended for development/testing"
+          echo "⚠ For production, use config.database.postgres.existingSecret"
+          {{- else }}
+          echo ""
+          echo "✓ Using Kubernetes secret for database credentials"
+          echo "✓ Secret name: {{ .Values.config.database.postgres.existingSecret }}"
+          {{- end }}
+
+          echo ""
+          echo "SUCCESS: PostgreSQL configuration is valid"
+          exit 0
+      envFrom:
+      {{- include "mealie.envFrom.configMap" . | nindent 8 }}
+      env:
+      {{- include "mealie.envVars.secrets" . | nindent 8 }}
+  restartPolicy: Never
+{{- end }}

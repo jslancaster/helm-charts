@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "mealie.fullname" . }}-test-api-health"
+  labels:
+    {{- include "mealie.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  containers:
+    - name: test
+      image: curlimages/curl:8.5.0
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing Mealie API health endpoints..."
+
+          SERVICE_URL="http://{{ include "mealie.fullname" . }}:{{ .Values.service.port }}"
+          MAX_RETRIES=30
+          RETRY_DELAY=10
+
+          echo "Waiting for Mealie to be ready..."
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i of $MAX_RETRIES..."
+
+            # Test root endpoint
+            if curl -f -s --max-time 5 "$SERVICE_URL/" > /dev/null 2>&1; then
+              echo "✓ Root endpoint is accessible"
+
+              # Test API docs endpoint if enabled
+              {{- if .Values.config.apiDocs }}
+              if curl -f -s --max-time 5 "$SERVICE_URL/docs" > /dev/null 2>&1; then
+                echo "✓ API documentation endpoint is accessible"
+              else
+                echo "⚠ API documentation endpoint returned non-200 status (may still be initializing)"
+              fi
+              {{- end }}
+
+              # Test API health endpoint
+              if curl -f -s --max-time 5 "$SERVICE_URL/api/app/about" > /dev/null 2>&1; then
+                echo "✓ API health endpoint is accessible"
+                echo "SUCCESS: Mealie API is healthy and responding"
+                exit 0
+              else
+                echo "⚠ API health endpoint not ready yet..."
+              fi
+            else
+              echo "Service not ready, waiting ${RETRY_DELAY}s..."
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "FAILED: Mealie API did not become healthy within expected time"
+          exit 1
+  restartPolicy: Never

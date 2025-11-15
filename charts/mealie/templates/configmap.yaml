@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mealie.fullname" . }}
+  labels:
+    {{- include "mealie.labels" . | nindent 4 }}
+data:
+  # General Application Settings
+  PUID: {{ .Values.config.puid | quote }}
+  PGID: {{ .Values.config.pgid | quote }}
+  DEFAULT_GROUP: {{ .Values.config.defaultGroup | quote }}
+  DEFAULT_HOUSEHOLD: {{ .Values.config.defaultHousehold | quote }}
+  BASE_URL: {{ .Values.config.baseUrl | quote }}
+  TOKEN_TIME: {{ .Values.config.tokenTime | quote }}
+  API_PORT: {{ .Values.config.apiPort | quote }}
+  API_DOCS: {{ .Values.config.apiDocs | quote }}
+  TZ: {{ .Values.config.timezone | quote }}
+  ALLOW_SIGNUP: {{ .Values.config.allowSignup | quote }}
+  ALLOW_PASSWORD_LOGIN: {{ .Values.config.allowPasswordLogin | quote }}
+  {{- if .Values.config.logConfigOverride }}
+  LOG_CONFIG_OVERRIDE: {{ .Values.config.logConfigOverride | quote }}
+  {{- end }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  DAILY_SCHEDULE_TIME: {{ .Values.config.dailyScheduleTime | quote }}
+
+  # Security Settings
+  SECURITY_MAX_LOGIN_ATTEMPTS: {{ .Values.config.securityMaxLoginAttempts | quote }}
+  SECURITY_USER_LOCKOUT_TIME: {{ .Values.config.securityUserLockoutTime | quote }}
+
+  # Database Configuration
+  DB_ENGINE: {{ .Values.config.database.engine | quote }}
+  {{- if eq .Values.config.database.engine "sqlite" }}
+  SQLITE_MIGRATE_JOURNAL_WAL: {{ .Values.config.database.sqlite.migrateJournalWal | quote }}
+  {{- end }}
+  {{- if eq .Values.config.database.engine "postgres" }}
+  POSTGRES_PORT: {{ .Values.config.database.postgres.port | quote }}
+  POSTGRES_DB: {{ .Values.config.database.postgres.database | quote }}
+  {{- end }}
+
+  # Web Server Settings
+  UVICORN_WORKERS: {{ .Values.config.uvicornWorkers | quote }}
+
+  # TLS/SSL Settings
+  {{- if .Values.config.tls.certificatePath }}
+  TLS_CERTIFICATE_PATH: {{ .Values.config.tls.certificatePath | quote }}
+  {{- end }}
+  {{- if .Values.config.tls.privateKeyPath }}
+  TLS_PRIVATE_KEY_PATH: {{ .Values.config.tls.privateKeyPath | quote }}
+  {{- end }}
+
+  # LDAP Settings (non-sensitive)
+  {{- if .Values.config.ldap.enabled }}
+  LDAP_AUTH_ENABLED: {{ .Values.config.ldap.enabled | quote }}
+  LDAP_TLS_INSECURE: {{ .Values.config.ldap.tlsInsecure | quote }}
+  {{- if .Values.config.ldap.tlsCacertfile }}
+  LDAP_TLS_CACERTFILE: {{ .Values.config.ldap.tlsCacertfile | quote }}
+  {{- end }}
+  LDAP_ENABLE_STARTTLS: {{ .Values.config.ldap.enableStarttls | quote }}
+  {{- if .Values.config.ldap.baseDn }}
+  LDAP_BASE_DN: {{ .Values.config.ldap.baseDn | quote }}
+  {{- end }}
+  {{- if .Values.config.ldap.userFilter }}
+  LDAP_USER_FILTER: {{ .Values.config.ldap.userFilter | quote }}
+  {{- end }}
+  {{- if .Values.config.ldap.adminFilter }}
+  LDAP_ADMIN_FILTER: {{ .Values.config.ldap.adminFilter | quote }}
+  {{- end }}
+  LDAP_ID_ATTRIBUTE: {{ .Values.config.ldap.idAttribute | quote }}
+  LDAP_NAME_ATTRIBUTE: {{ .Values.config.ldap.nameAttribute | quote }}
+  LDAP_MAIL_ATTRIBUTE: {{ .Values.config.ldap.mailAttribute | quote }}
+  {{- end }}
+
+  # OIDC Settings (non-sensitive)
+  {{- if .Values.config.oidc.enabled }}
+  OIDC_AUTH_ENABLED: {{ .Values.config.oidc.enabled | quote }}
+  OIDC_SIGNUP_ENABLED: {{ .Values.config.oidc.signupEnabled | quote }}
+  {{- if .Values.config.oidc.userGroup }}
+  OIDC_USER_GROUP: {{ .Values.config.oidc.userGroup | quote }}
+  {{- end }}
+  {{- if .Values.config.oidc.adminGroup }}
+  OIDC_ADMIN_GROUP: {{ .Values.config.oidc.adminGroup | quote }}
+  {{- end }}
+  OIDC_AUTO_REDIRECT: {{ .Values.config.oidc.autoRedirect | quote }}
+  OIDC_PROVIDER_NAME: {{ .Values.config.oidc.providerName | quote }}
+  OIDC_REMEMBER_ME: {{ .Values.config.oidc.rememberMe | quote }}
+  OIDC_SIGNING_ALGORITHM: {{ .Values.config.oidc.signingAlgorithm | quote }}
+  OIDC_USER_CLAIM: {{ .Values.config.oidc.userClaim | quote }}
+  OIDC_NAME_CLAIM: {{ .Values.config.oidc.nameClaim | quote }}
+  OIDC_GROUPS_CLAIM: {{ .Values.config.oidc.groupsClaim | quote }}
+  {{- if .Values.config.oidc.scopesOverride }}
+  OIDC_SCOPES_OVERRIDE: {{ .Values.config.oidc.scopesOverride | quote }}
+  {{- end }}
+  {{- if .Values.config.oidc.tlsCacertfile }}
+  OIDC_TLS_CACERTFILE: {{ .Values.config.oidc.tlsCacertfile | quote }}
+  {{- end }}
+  {{- end }}
+
+  # SMTP Settings (non-sensitive)
+  {{- if .Values.config.smtp.enabled }}
+  SMTP_FROM_NAME: {{ .Values.config.smtp.fromName | quote }}
+  {{- if .Values.config.smtp.fromEmail }}
+  SMTP_FROM_EMAIL: {{ .Values.config.smtp.fromEmail | quote }}
+  {{- end }}
+  SMTP_AUTH_STRATEGY: {{ .Values.config.smtp.authStrategy | quote }}
+  {{- end }}
+
+  # OpenAI Settings (non-sensitive)
+  {{- if .Values.config.openai.enabled }}
+  OPENAI_MODEL: {{ .Values.config.openai.model | quote }}
+  {{- if .Values.config.openai.customHeaders }}
+  OPENAI_CUSTOM_HEADERS: {{ .Values.config.openai.customHeaders | quote }}
+  {{- end }}
+  {{- if .Values.config.openai.customParams }}
+  OPENAI_CUSTOM_PARAMS: {{ .Values.config.openai.customParams | quote }}
+  {{- end }}
+  OPENAI_ENABLE_IMAGE_SERVICES: {{ .Values.config.openai.enableImageServices | quote }}
+  OPENAI_WORKERS: {{ .Values.config.openai.workers | quote }}
+  OPENAI_SEND_DATABASE_DATA: {{ .Values.config.openai.sendDatabaseData | quote }}
+  OPENAI_REQUEST_TIMEOUT: {{ .Values.config.openai.requestTimeout | quote }}
+  {{- end }}
+
+  # Theme Settings
+  THEME_LIGHT_PRIMARY: {{ .Values.config.theme.light.primary | quote }}
+  THEME_LIGHT_ACCENT: {{ .Values.config.theme.light.accent | quote }}
+  THEME_LIGHT_SECONDARY: {{ .Values.config.theme.light.secondary | quote }}
+  THEME_LIGHT_SUCCESS: {{ .Values.config.theme.light.success | quote }}
+  THEME_LIGHT_INFO: {{ .Values.config.theme.light.info | quote }}
+  THEME_LIGHT_WARNING: {{ .Values.config.theme.light.warning | quote }}
+  THEME_LIGHT_ERROR: {{ .Values.config.theme.light.error | quote }}
+  THEME_DARK_PRIMARY: {{ .Values.config.theme.dark.primary | quote }}
+  THEME_DARK_ACCENT: {{ .Values.config.theme.dark.accent | quote }}
+  THEME_DARK_SECONDARY: {{ .Values.config.theme.dark.secondary | quote }}
+  THEME_DARK_SUCCESS: {{ .Values.config.theme.dark.success | quote }}
+  THEME_DARK_INFO: {{ .Values.config.theme.dark.info | quote }}
+  THEME_DARK_WARNING: {{ .Values.config.theme.dark.warning | quote }}
+  THEME_DARK_ERROR: {{ .Values.config.theme.dark.error | quote }}
