@@ -32,7 +32,7 @@ data:
   {{- if eq .Values.config.database.engine "sqlite" }}
   SQLITE_MIGRATE_JOURNAL_WAL: {{ .Values.config.database.sqlite.migrateJournalWal | quote }}
   {{- end }}
-  {{- if eq .Values.config.database.engine "postgres" }}
+  {{- if and (eq .Values.config.database.engine "postgres") (not .Values.config.database.postgres.existingSecret) }}
   POSTGRES_PORT: {{ .Values.config.database.postgres.port | quote }}
   POSTGRES_DB: {{ .Values.config.database.postgres.database | quote }}
   {{- end }}

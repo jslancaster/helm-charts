@@ -91,6 +91,16 @@ Sensitive environment variables from Secrets
     secretKeyRef:
       name: {{ .Values.config.database.postgres.existingSecret }}
       key: {{ .Values.config.database.postgres.existingSecretHostKey }}
+- name: POSTGRES_PORT
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.config.database.postgres.existingSecret }}
+      key: {{ .Values.config.database.postgres.existingSecretPortKey }}
+- name: POSTGRES_DB
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.config.database.postgres.existingSecret }}
+      key: {{ .Values.config.database.postgres.existingSecretDatabaseKey }}
 {{- if .Values.config.database.postgres.urlOverride }}
 - name: POSTGRES_URL_OVERRIDE
   valueFrom:
