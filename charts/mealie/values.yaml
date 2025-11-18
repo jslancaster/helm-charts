@@ -1,0 +1,538 @@
+# Default values for mealie.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Number of Mealie replicas to deploy
+replicaCount: 1
+
+# Container image configuration
+image:
+  registry: ghcr.io
+  repository: mealie-recipes/mealie
+  # Image pull policy
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion
+  tag: ""
+
+# Secrets for pulling images from a private registry
+imagePullSecrets: []
+# Override the chart name
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Annotations to add to the pod
+podAnnotations: {}
+# Labels to add to the pod
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Service configuration
+service:
+  # Service type (ClusterIP, NodePort, LoadBalancer)
+  type: ClusterIP
+  # Service port
+  port: 9000
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+# HTTPRoute configuration (Gateway API)
+# Requires Gateway API resources and suitable controller installed within the cluster
+httpRoute:
+  # HTTPRoute enabled.
+  enabled: false
+  # HTTPRoute annotations.
+  annotations: {}
+  # Which Gateways this Route is attached to.
+  parentRefs:
+  - name: gateway
+    sectionName: http
+    # namespace: default
+  # Hostnames matching HTTP header.
+  hostnames:
+  - chart-example.local
+  # List of rules and filters applied.
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /headers
+  #   filters:
+  #   - type: RequestHeaderModifier
+  #     requestHeaderModifier:
+  #       set:
+  #       - name: My-Overwrite-Header
+  #         value: this-is-the-only-value
+  #       remove:
+  #       - User-Agent
+  # - matches:
+  #   - path:
+  #       type: PathPrefix
+  #       value: /echo
+  #     headers:
+  #     - name: version
+  #       value: v2
+
+resources: {}
+  # Resource limits and requests
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+# Autoscaling configuration
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes for the deployment
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volume mounts for the deployment
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Persistent storage configuration
+persistence:
+  # Enable persistent storage for Mealie data
+  enabled: true
+  data:
+    # Enable data volume
+    enabled: true
+    # Use existing PersistentVolumeClaim
+    existingClaim: ""
+    # Storage class to use for dynamic provisioning
+    storageClass: ""
+    # Access mode for the volume
+    accessMode: ReadWriteOnce
+    # Size of the volume
+    size: 10Gi
+    # Mount path inside the container
+    mountPath: /app/data
+  backup:
+    # Enable backup volume (optional separate volume for backups)
+    enabled: false
+    # Use existing PersistentVolumeClaim
+    existingClaim: ""
+    # Storage class to use for dynamic provisioning
+    storageClass: ""
+    # Access mode for the volume
+    accessMode: ReadWriteOnce
+    # Size of the volume
+    size: 5Gi
+    # Mount path inside the container
+    mountPath: /app/backups
+
+# Mealie application configuration
+# All configuration options are documented at: https://docs.mealie.io/documentation/getting-started/installation/backend-config/
+config:
+  # ============================================================================
+  # GENERAL APPLICATION SETTINGS
+  # ============================================================================
+
+  # UserID permissions between host OS and container
+  puid: 911
+
+  # GroupID permissions between host OS and container
+  pgid: 911
+
+  # Default group assigned to new users
+  defaultGroup: "Home"
+
+  # Default household for users in each group
+  defaultHousehold: "Family"
+
+  # Used for notifications and external references (e.g., http://mealie.example.com)
+  baseUrl: "http://localhost:8080"
+
+  # Auth token validity in hours (max 87,600)
+  tokenTime: 48
+
+  # Backend API port (don't modify in Docker - use service.port instead)
+  apiPort: 9000
+
+  # Enables/disables local API documentation access
+  apiDocs: true
+
+  # Sets correct date/time on server (e.g., America/New_York, Europe/London)
+  timezone: "UTC"
+
+  # Permits user registration without token (disabled by default for security)
+  allowSignup: false
+
+  # Display username/password fields on login page
+  allowPasswordLogin: true
+
+  # Custom logging configuration path (optional)
+  logConfigOverride: ""
+
+  # Logging verbosity level (debug, info, warning, error, critical)
+  logLevel: "info"
+
+  # Daily task execution time in HH:MM format (uses local time from timezone setting)
+  dailyScheduleTime: "23:45"
+
+  # ============================================================================
+  # SECURITY SETTINGS
+  # ============================================================================
+
+  # Invalid password attempts before account lockout
+  securityMaxLoginAttempts: 5
+
+  # Account lockout duration in hours
+  securityUserLockoutTime: 24
+
+  # ============================================================================
+  # DATABASE CONFIGURATION
+  # ============================================================================
+
+  database:
+    # Database engine: 'sqlite' or 'postgres'
+    engine: "sqlite"
+
+    # SQLite specific settings
+    sqlite:
+      # Enable WAL mode for concurrent SQLite access
+      migrateJournalWal: false
+
+    # PostgreSQL configuration
+    # SECURITY NOTE: For production use, always use existingSecret to provide database credentials
+    # Inline values below are only for development/testing purposes
+    postgres:
+      # PostgreSQL server address
+      # Can be provided inline or via existingSecret
+      host: ""
+      existingSecret: ""
+      existingSecretHostKey: "host"
+
+      # PostgreSQL server port
+      # Can be provided inline or via existingSecret
+      port: "5432"
+      existingSecretPortKey: "port"
+
+      # PostgreSQL database name
+      # Can be provided inline or via existingSecret
+      database: "mealie"
+      existingSecretDatabaseKey: "database"
+
+      # PostgreSQL username
+      # Can be provided inline or via existingSecret
+      username: "mealie"
+      existingSecretUsernameKey: "username"
+
+      # PostgreSQL password
+      # WARNING: For production, use existingSecret instead of inline password
+      # Can be provided inline or via existingSecret
+      password: ""
+      existingSecretPasswordKey: "password"
+
+      # Complete database URL override (bypasses other settings)
+      # Can be provided inline or via existingSecret
+      urlOverride: ""
+      existingSecretUrlOverrideKey: "url"
+
+  # ============================================================================
+  # EMAIL/SMTP CONFIGURATION
+  # ============================================================================
+
+  smtp:
+    # Enable SMTP email functionality
+    enabled: false
+
+    # SMTP server host (required for email)
+    # Can be provided inline or via existingSecret
+    host: ""
+    existingSecret: ""
+    existingSecretHostKey: "host"
+
+    # SMTP server port (required for email)
+    # Can be provided inline or via existingSecret
+    port: "587"
+    existingSecretPortKey: "port"
+
+    # Sender display name in emails
+    fromName: "Mealie"
+
+    # Sender email address
+    fromEmail: ""
+
+    # Authentication method: TLS, SSL, or NONE
+    authStrategy: "TLS"
+
+    # SMTP username (required if using TLS or SSL)
+    # Can be provided inline or via existingSecret
+    username: ""
+    existingSecretUsernameKey: "username"
+
+    # SMTP password (required if using TLS or SSL)
+    # WARNING: For production, use existingSecret instead of inline password
+    # Can be provided inline or via existingSecret
+    password: ""
+    existingSecretPasswordKey: "password"
+
+  # ============================================================================
+  # WEB SERVER SETTINGS
+  # ============================================================================
+
+  # Number of web server worker processes
+  # WARNING: Modifying may cause memory leaks
+  uvicornWorkers: 1
+
+  # ============================================================================
+  # TLS/SSL CERTIFICATES
+  # ============================================================================
+
+  tls:
+    # Path to SSL certificate file (optional)
+    certificatePath: ""
+
+    # Path to private key file (optional)
+    privateKeyPath: ""
+
+  # ============================================================================
+  # LDAP AUTHENTICATION
+  # ============================================================================
+
+  ldap:
+    # Enable LDAP authentication
+    enabled: false
+
+    # LDAP server URL (e.g., ldap://ldap.example.com)
+    # Can be provided inline or via existingSecret
+    serverUrl: ""
+    existingSecret: ""
+    existingSecretServerUrlKey: "serverUrl"
+
+    # Skip server certificate verification
+    tlsInsecure: false
+
+    # Path to CA certificate file
+    tlsCacertfile: ""
+
+    # Use STARTTLS for connection
+    enableStarttls: false
+
+    # Starting point for user searches (e.g., ou=users,dc=example,dc=com)
+    baseDn: ""
+
+    # Optional bind user for queries (e.g., cn=admin,dc=example,dc=com)
+    # Can be provided inline or via existingSecret
+    queryBind: ""
+    existingSecretQueryBindKey: "queryBind"
+
+    # Password for bind user
+    # WARNING: For production, use existingSecret instead of inline password
+    # Can be provided inline or via existingSecret
+    queryPassword: ""
+    existingSecretQueryPasswordKey: "queryPassword"
+
+    # Filter to narrow eligible users (e.g., (memberOf=cn=mealie_users,ou=groups,dc=example,dc=com))
+    userFilter: ""
+
+    # Filter identifying admin users (e.g., (memberOf=cn=mealie_admins,ou=groups,dc=example,dc=com))
+    adminFilter: ""
+
+    # Attribute that maps to user's ID
+    idAttribute: "uid"
+
+    # Attribute that maps to user's name
+    nameAttribute: "name"
+
+    # Attribute that maps to user's email
+    mailAttribute: "mail"
+
+  # ============================================================================
+  # OPENID CONNECT/OIDC AUTHENTICATION (v1.4.0+)
+  # ============================================================================
+
+  oidc:
+    # Enable OIDC authentication
+    enabled: false
+
+    # Allow new user creation via OIDC
+    signupEnabled: true
+
+    # Provider configuration URL (e.g., https://auth.example.com/.well-known/openid-configuration)
+    # Can be provided inline or via existingSecret
+    configurationUrl: ""
+    existingSecret: ""
+    existingSecretConfigurationUrlKey: "configurationUrl"
+
+    # Client ID from OIDC provider
+    # Can be provided inline or via existingSecret
+    clientId: ""
+    existingSecretClientIdKey: "clientId"
+
+    # Client secret from OIDC provider
+    # WARNING: For production, use existingSecret instead of inline secret
+    # Can be provided inline or via existingSecret
+    clientSecret: ""
+    existingSecretClientSecretKey: "clientSecret"
+
+    # Restrict login to this group (optional)
+    userGroup: ""
+
+    # Group granting admin status (optional)
+    adminGroup: ""
+
+    # Bypass login page and auto-redirect to OIDC
+    autoRedirect: false
+
+    # Display name on login button
+    providerName: "OAuth"
+
+    # Extend session automatically (remember me)
+    rememberMe: false
+
+    # Token signing method
+    signingAlgorithm: "RS256"
+
+    # Claim for user identification
+    userClaim: "email"
+
+    # Claim for user's full name
+    nameClaim: "name"
+
+    # Claim for group membership
+    groupsClaim: "groups"
+
+    # Override requested scopes (optional)
+    scopesOverride: ""
+
+    # Path to CA certificate (optional)
+    tlsCacertfile: ""
+
+  # ============================================================================
+  # OPENAI INTEGRATION (v1.7.0+)
+  # ============================================================================
+
+  openai:
+    # Enable OpenAI integration
+    enabled: false
+
+    # Custom API endpoint (alternative to OpenAI, e.g., for local LLMs)
+    # Can be provided inline or via existingSecret
+    baseUrl: ""
+    existingSecret: ""
+    existingSecretBaseUrlKey: "baseUrl"
+
+    # API key for service access
+    # WARNING: For production, use existingSecret instead of inline key
+    # Can be provided inline or via existingSecret
+    apiKey: ""
+    existingSecretApiKeyKey: "apiKey"
+
+    # Model selection (e.g., gpt-4o, gpt-3.5-turbo)
+    model: "gpt-4o"
+
+    # JSON-encoded custom headers (optional)
+    customHeaders: ""
+
+    # JSON-encoded query parameters (optional)
+    customParams: ""
+
+    # Enable image processing features
+    enableImageServices: true
+
+    # Worker threads per request
+    workers: 2
+
+    # Send Mealie data to OpenAI for accuracy
+    sendDatabaseData: true
+
+    # Request timeout in seconds
+    requestTimeout: 300
+
+  # ============================================================================
+  # THEME CUSTOMIZATION
+  # ============================================================================
+
+  theme:
+    # Light theme colors (hex format)
+    light:
+      primary: "#E58325"
+      accent: "#007A99"
+      secondary: "#973542"
+      success: "#43A047"
+      info: "#1976D2"
+      warning: "#FF6D00"
+      error: "#EF5350"
+
+    # Dark theme colors (hex format)
+    dark:
+      primary: "#E58325"
+      accent: "#007A99"
+      secondary: "#973542"
+      success: "#43A047"
+      info: "#1976D2"
+      warning: "#FF6D00"
+      error: "#EF5350"
+
+# Additional environment variables (catch-all for variables not explicitly defined above)
+# Each entry should have a name and value
+extraEnvVars: []
+# - name: CUSTOM_VAR
+#   value: "custom_value"
