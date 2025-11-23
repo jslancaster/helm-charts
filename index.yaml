@@ -9,6 +9,6 @@ entries:
     name: mealie
     type: application
     urls:
-    - .cr-release-packages/mealie-0.1.0.tgz
+    - releases/mealie-0.1.0.tgz
     version: 0.1.0
 generated: "2025-11-23T08:13:07.223868-05:00"
